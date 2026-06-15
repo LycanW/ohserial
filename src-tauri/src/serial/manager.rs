@@ -1,8 +1,6 @@
 use std::sync::{mpsc, Mutex};
 use std::time::Duration;
 
-use serialport::SerialPort;
-
 use crate::error::{AppError, AppResult};
 use crate::serial::config::SerialConfig;
 use crate::serial::worker::SerialPortWorker;
