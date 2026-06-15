@@ -35,7 +35,7 @@ export function SendPanel({ disabled, onSend }: SendPanelProps) {
 
   return (
     <div className="flex items-end gap-3 p-4 border-t border-border bg-card">
-      <div className="flex flex-col gap-1 flex-1">
+      <div className="flex flex-col gap-1 flex-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Send</label>
         <Input
           value={text}
@@ -46,7 +46,7 @@ export function SendPanel({ disabled, onSend }: SendPanelProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Mode</label>
         <Select value={mode} onValueChange={(v) => setMode(v as 'text' | 'hex')}>
           <SelectTrigger className="w-24">
@@ -59,7 +59,7 @@ export function SendPanel({ disabled, onSend }: SendPanelProps) {
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Line Ending</label>
         <Select
           value={lineEnding}

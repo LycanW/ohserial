@@ -34,7 +34,7 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
 
   return (
     <div className="flex flex-wrap items-end gap-3 p-4 border-b border-border bg-card">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Port</label>
         <Select value={port} onValueChange={setPort}>
           <SelectTrigger className="w-56">
@@ -50,7 +50,7 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Baud Rate</label>
         <Input
           list="baud-presets"
@@ -65,7 +65,7 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </datalist>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Data Bits</label>
         <Select
           value={String(dataBits)}
@@ -83,7 +83,7 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Parity</label>
         <Select value={parity} onValueChange={(v) => setParity(v as 'none' | 'odd' | 'even')}>
           <SelectTrigger className="w-24">
@@ -97,7 +97,7 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
         <label className="text-xs text-muted-foreground">Stop Bits</label>
         <Select
           value={String(stopBits)}
