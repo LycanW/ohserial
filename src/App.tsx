@@ -23,20 +23,21 @@ function App() {
         onClose={closePort}
       />
 
-      <div className="flex items-center justify-center gap-2 p-2 border-b border-border bg-card">
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-border">
+        <span className="text-xs text-muted-foreground uppercase tracking-wider">Mode</span>
         <Button
           variant={mode === 'traditional' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setMode('traditional')}
         >
-          传统串口模式
+          Traditional Serial
         </Button>
         <Button
           variant={mode === 'terminal' ? 'default' : 'outline'}
           size="sm"
           onClick={() => setMode('terminal')}
         >
-          虚拟终端模式
+          Virtual Terminal
         </Button>
       </div>
 
