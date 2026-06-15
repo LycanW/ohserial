@@ -23,7 +23,7 @@ pub fn run() {
             commands::write_data,
         ])
         .setup(|app| {
-            let app_handle = app.handle();
+            let app_handle = app.handle().clone();
             let serial = app.state::<AppState>().serial.clone();
             let terminal = app.state::<AppState>().terminal.clone();
 

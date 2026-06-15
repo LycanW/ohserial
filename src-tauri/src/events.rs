@@ -1,5 +1,5 @@
 use serde::Serialize;
-use tauri::Manager;
+use tauri::{AppHandle, Emitter, Runtime};
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "event", content = "payload")]
@@ -18,8 +18,8 @@ pub enum ConnectionState {
     Error { message: String },
 }
 
-pub fn emit_event<M: Manager<R>, R: tauri::Runtime>(
-    manager: &M,
+pub fn emit_event<R: Runtime>(
+    manager: &AppHandle<R>,
     event: AppEvent,
 ) -> Result<(), String> {
     manager
