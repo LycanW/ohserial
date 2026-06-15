@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { Button } from '@/components/ui/button'
@@ -18,14 +18,29 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const timersRef = useRef<number[]>([])
 
+  const [debug, setDebug] = useState({ cols: 0, rows: 0, cw: 0, ch: 0, tw: 0, th: 0 })
+
   const fitTerminal = useCallback(() => {
     const fitAddon = fitAddonRef.current
-    if (!fitAddon) return
+    const container = containerRef.current
+    const terminal = terminalRef.current
+    if (!fitAddon || !container || !terminal) return
+
     try {
       fitAddon.fit()
     } catch {
       // Ignore fit failures when container is not ready
     }
+
+    const parent = container.parentElement
+    setDebug({
+      cols: terminal.cols,
+      rows: terminal.rows,
+      cw: container.clientWidth,
+      ch: container.clientHeight,
+      tw: parent?.clientWidth ?? 0,
+      th: parent?.clientHeight ?? 0,
+    })
   }, [])
 
   useEffect(() => {
@@ -62,7 +77,6 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
       fitTerminal()
     }
 
-    // Try to fit immediately and then several times as fonts/layout settle
     const ids = [
       window.setTimeout(scheduleFit, 0),
       window.setTimeout(scheduleFit, 50),
@@ -123,6 +137,9 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
           {disabled ? 'Connect to type' : 'Virtual Terminal'}
         </span>
         <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground font-mono">
+            {debug.cols}×{debug.rows} | c:{debug.cw}×{debug.ch} | p:{debug.tw}×{debug.th}
+          </span>
           <Button variant="outline" size="sm" onClick={handleClear}>
             Clear
           </Button>
