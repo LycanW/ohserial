@@ -10,7 +10,15 @@ interface TerminalViewProps {
   flushTerminalData: () => Uint8Array[]
 }
 
-function measureCell(terminal: Terminal): { width: number; height: number } | null {
+function measureCell(container: HTMLElement, terminal: Terminal): { width: number; height: number } | null {
+  const cellEl = container.querySelector('.xterm-cell') as HTMLElement | null
+  if (cellEl) {
+    const rect = cellEl.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) {
+      return { width: rect.width, height: rect.height }
+    }
+  }
+
   const fontFamily = (terminal.options.fontFamily as string) || 'monospace'
   const fontSize = (terminal.options.fontSize as number) || 14
 
@@ -18,6 +26,7 @@ function measureCell(terminal: Terminal): { width: number; height: number } | nu
   span.textContent = 'W'
   span.style.fontFamily = fontFamily
   span.style.fontSize = `${fontSize}px`
+  span.style.lineHeight = 'normal'
   span.style.position = 'absolute'
   span.style.visibility = 'hidden'
   span.style.whiteSpace = 'pre'
@@ -31,11 +40,14 @@ function measureCell(terminal: Terminal): { width: number; height: number } | nu
 }
 
 function resizeToContainer(terminal: Terminal, container: HTMLElement) {
-  const cell = measureCell(terminal)
+  const { clientWidth, clientHeight } = container
+  if (clientWidth < 50 || clientHeight < 50) return
+
+  const cell = measureCell(container, terminal)
   if (!cell) return
 
-  const cols = Math.floor(container.clientWidth / cell.width)
-  const rows = Math.floor(container.clientHeight / cell.height)
+  const cols = Math.floor(clientWidth / cell.width)
+  const rows = Math.floor(clientHeight / cell.height)
 
   if (cols > 0 && rows > 0 && (cols !== terminal.cols || rows !== terminal.rows)) {
     terminal.resize(cols, rows)
@@ -51,8 +63,6 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     const container = containerRef.current
     const terminal = terminalRef.current
     if (!container || !terminal) return
-    if (container.clientWidth < 50 || container.clientHeight < 50) return
-
     resizeToContainer(terminal, container)
   }, [])
 
@@ -62,7 +72,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: 14,
-      fontFamily: 'JetBrains Mono, Fira Code, Consolas, monospace',
+      fontFamily: 'monospace',
       theme: {
         background: '#0f172a',
         foreground: '#e2e8f0',
@@ -74,7 +84,6 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     })
 
     terminal.open(containerRef.current)
-
     terminal.onData((data) => {
       if (!disabled) {
         onInput(data)
@@ -83,18 +92,33 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
 
     terminalRef.current = terminal
 
-    // Keep trying to resize until the container has a real size
-    let attempts = 0
-    const tryFit = () => {
+    // Resize to a default grid first so xterm renders cells we can measure,
+    // then fit to the container once fonts/layout are ready.
+    const applyFit = async () => {
+      const container = containerRef.current
+      const term = terminalRef.current
+      if (!container || !term) return
+
+      terminal.resize(80, 24)
+
+      await document.fonts.ready
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+      await new Promise((resolve) => requestAnimationFrame(resolve))
+
+      resizeToContainer(term, container)
+    }
+
+    let cancelled = false
+    const tryFit = async (attempt = 0) => {
+      if (cancelled) return
       const container = containerRef.current
       const term = terminalRef.current
       if (!container || !term) return
 
       if (container.clientWidth > 0 && container.clientHeight > 0) {
-        resizeToContainer(term, container)
-      } else if (attempts < 20) {
-        attempts += 1
-        setTimeout(tryFit, 50)
+        await applyFit()
+      } else if (attempt < 20) {
+        setTimeout(() => tryFit(attempt + 1), 50)
       }
     }
     tryFit()
@@ -114,6 +138,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     resizeObserverRef.current.observe(containerRef.current)
 
     return () => {
+      cancelled = true
       window.removeEventListener('resize', handleResize)
       resizeObserverRef.current?.disconnect()
       terminal.dispose()
@@ -156,7 +181,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
       </div>
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 relative overflow-hidden"
+        className="flex-1 min-h-0 w-full relative overflow-hidden"
       />
     </div>
   )
