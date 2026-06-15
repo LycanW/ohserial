@@ -64,3 +64,38 @@ fn parse_hex(input: &str) -> Result<Vec<u8>, String> {
         .map(|i| u8::from_str_radix(&cleaned[i..i + 2], 16).map_err(|e| e.to_string()))
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn encode_text_with_lf() {
+        let req = WriteRequest {
+            data: "hello".into(),
+            mode: WriteMode::Text,
+            line_ending: LineEnding::Lf,
+        };
+        assert_eq!(ProtocolEngine::encode(req).unwrap(), b"hello\n");
+    }
+
+    #[test]
+    fn encode_hex() {
+        let req = WriteRequest {
+            data: "48 65 6C 6C 6F".into(),
+            mode: WriteMode::Hex,
+            line_ending: LineEnding::None,
+        };
+        assert_eq!(ProtocolEngine::encode(req).unwrap(), b"Hello");
+    }
+
+    #[test]
+    fn encode_hex_odd_digits_fails() {
+        let req = WriteRequest {
+            data: "123".into(),
+            mode: WriteMode::Hex,
+            line_ending: LineEnding::None,
+        };
+        assert!(ProtocolEngine::encode(req).is_err());
+    }
+}

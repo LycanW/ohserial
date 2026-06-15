@@ -50,3 +50,37 @@ impl SerialConfig {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_config() -> SerialConfig {
+        SerialConfig {
+            port: "/dev/ttyUSB0".into(),
+            baud_rate: 115200,
+            data_bits: 8,
+            parity: "none".into(),
+            stop_bits: 1,
+        }
+    }
+
+    #[test]
+    fn valid_config_passes() {
+        assert!(sample_config().validate().is_ok());
+    }
+
+    #[test]
+    fn zero_baud_rate_fails() {
+        let mut c = sample_config();
+        c.baud_rate = 0;
+        assert!(c.validate().is_err());
+    }
+
+    #[test]
+    fn empty_port_fails() {
+        let mut c = sample_config();
+        c.port = "  ".into();
+        assert!(c.validate().is_err());
+    }
+}

@@ -113,3 +113,34 @@ impl TerminalBuffer {
         self.to_update()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn writes_text_and_advances_cursor() {
+        let mut buf = TerminalBuffer::new(10, 5);
+        buf.feed(b"abc");
+        assert_eq!(buf.cursor_col, 3);
+        assert_eq!(buf.cells[0][0].ch, 'a');
+        assert_eq!(buf.cells[0][1].ch, 'b');
+        assert_eq!(buf.cells[0][2].ch, 'c');
+    }
+
+    #[test]
+    fn new_line_moves_cursor_down() {
+        let mut buf = TerminalBuffer::new(10, 5);
+        buf.feed(b"a\nb");
+        assert_eq!(buf.cursor_row, 1);
+        assert_eq!(buf.cursor_col, 1);
+    }
+
+    #[test]
+    fn scrolls_when_rows_exhausted() {
+        let mut buf = TerminalBuffer::new(10, 3);
+        buf.feed(b"\n\n\nX");
+        assert_eq!(buf.cursor_row, 2);
+        assert_eq!(buf.cells[2][0].ch, 'X');
+    }
+}
