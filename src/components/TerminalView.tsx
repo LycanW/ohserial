@@ -1,115 +1,84 @@
-import { useRef, useEffect } from 'react'
-import type { TerminalUpdate } from '@/types'
+import { useEffect, useRef } from 'react'
+import { Terminal } from '@xterm/xterm'
+import { FitAddon } from '@xterm/addon-fit'
+import '@xterm/xterm/css/xterm.css'
 
 interface TerminalViewProps {
-  terminal: TerminalUpdate | null
+  terminalTick: number
   disabled: boolean
   onInput: (data: string) => void
+  flushTerminalData: () => Uint8Array[]
 }
 
-export function TerminalView({ terminal, disabled, onInput }: TerminalViewProps) {
-  const terminalRef = useRef<HTMLDivElement>(null)
+export function TerminalView({ terminalTick, disabled, onInput, flushTerminalData }: TerminalViewProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const terminalRef = useRef<Terminal | null>(null)
+  const fitAddonRef = useRef<FitAddon | null>(null)
 
   useEffect(() => {
-    if (terminalRef.current) {
-      terminalRef.current.focus()
-    }
-  }, [])
+    if (!containerRef.current) return
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (disabled) return
+    const terminal = new Terminal({
+      cursorBlink: true,
+      fontSize: 14,
+      fontFamily: 'monospace',
+      theme: {
+        background: '#0f172a',
+        foreground: '#e2e8f0',
+        cursor: '#e2e8f0',
+        selectionBackground: '#334155',
+      },
+      convertEol: true,
+      scrollback: 10000,
+    })
 
-    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
-      e.preventDefault()
-      onInput(e.key)
-      return
+    const fitAddon = new FitAddon()
+    terminal.loadAddon(fitAddon)
+    terminal.open(containerRef.current)
+    fitAddon.fit()
+
+    terminal.onData((data) => {
+      if (!disabled) {
+        onInput(data)
+      }
+    })
+
+    terminalRef.current = terminal
+    fitAddonRef.current = fitAddon
+
+    const handleResize = () => {
+      fitAddon.fit()
     }
 
-    switch (e.key) {
-      case 'Enter':
-        e.preventDefault()
-        onInput('\r')
-        break
-      case 'Backspace':
-        e.preventDefault()
-        onInput('\x7f')
-        break
-      case 'Tab':
-        e.preventDefault()
-        onInput('\t')
-        break
-      case 'Escape':
-        e.preventDefault()
-        onInput('\x1b')
-        break
-      case 'ArrowUp':
-        e.preventDefault()
-        onInput('\x1b[A')
-        break
-      case 'ArrowDown':
-        e.preventDefault()
-        onInput('\x1b[B')
-        break
-      case 'ArrowRight':
-        e.preventDefault()
-        onInput('\x1b[C')
-        break
-      case 'ArrowLeft':
-        e.preventDefault()
-        onInput('\x1b[D')
-        break
-      case 'Home':
-        e.preventDefault()
-        onInput('\x1b[H')
-        break
-      case 'End':
-        e.preventDefault()
-        onInput('\x1b[F')
-        break
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      terminal.dispose()
+      terminalRef.current = null
+      fitAddonRef.current = null
     }
-  }
+  }, [disabled, onInput])
+
+  // Flush incoming data from the backend queue
+  useEffect(() => {
+    const terminal = terminalRef.current
+    if (!terminal) return
+
+    const chunks = flushTerminalData()
+    for (const chunk of chunks) {
+      terminal.write(chunk)
+    }
+  }, [terminalTick, flushTerminalData])
 
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-background">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <span className="text-xs text-muted-foreground">
-          {disabled ? 'Connect to type' : 'Click terminal and type'}
+          {disabled ? 'Connect to type' : 'Virtual Terminal'}
         </span>
       </div>
-
-      <div
-        ref={terminalRef}
-        tabIndex={0}
-        onKeyDown={handleKeyDown}
-        className="flex-1 min-h-0 p-3 overflow-auto font-mono text-sm outline-none focus:ring-2 focus:ring-inset focus:ring-ring/50"
-      >
-        {terminal ? (
-          <div
-            className="grid gap-0 leading-none"
-            style={{
-              gridTemplateColumns: `repeat(${terminal.cols}, minmax(0, 1fr))`,
-            }}
-          >
-            {terminal.cells.flatMap((row, r) =>
-              row.map((cell, c) => (
-                <span
-                  key={`${r}-${c}`}
-                  className="inline-block text-center"
-                  style={{
-                    color: cell.fg,
-                    backgroundColor: cell.bg,
-                    fontWeight: cell.bold ? 'bold' : 'normal',
-                  }}
-                >
-                  {cell.char}
-                </span>
-              ))
-            )}
-          </div>
-        ) : (
-          <div className="text-muted-foreground">No terminal data yet.</div>
-        )}
-      </div>
+      <div ref={containerRef} className="flex-1 min-h-0 p-2" />
     </div>
   )
 }

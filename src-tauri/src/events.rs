@@ -7,6 +7,7 @@ pub enum AppEvent {
     ConnectionStateChanged(ConnectionState),
     DataLine { timestamp: String, text: String },
     TerminalUpdate(crate::terminal::buffer::TerminalUpdate),
+    TerminalRaw { bytes: Vec<u8> },
 }
 
 #[derive(Debug, Clone, Serialize)]

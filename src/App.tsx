@@ -11,7 +11,7 @@ type AppMode = 'traditional' | 'terminal'
 
 function App() {
   const [mode, setMode] = useState<AppMode>('terminal')
-  const { ports, state, lines, terminal, openPort, closePort, writeData, writeRaw } = useSerial()
+  const { ports, state, lines, terminalTick, openPort, closePort, writeData, writeRaw, flushTerminalData } = useSerial()
   const connected = state.status === 'connected'
 
   return (
@@ -45,7 +45,12 @@ function App() {
         {mode === 'traditional' ? (
           <RawLogView lines={lines} />
         ) : (
-          <TerminalView terminal={terminal} disabled={!connected} onInput={writeRaw} />
+          <TerminalView
+            terminalTick={terminalTick}
+            disabled={!connected}
+            onInput={writeRaw}
+            flushTerminalData={flushTerminalData}
+          />
         )}
       </div>
 

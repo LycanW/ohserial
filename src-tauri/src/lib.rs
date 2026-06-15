@@ -47,6 +47,12 @@ pub fn run() {
                                     text,
                                 },
                             );
+                            let _ = emit_event(
+                                &app_handle,
+                                AppEvent::TerminalRaw {
+                                    bytes: chunk.clone(),
+                                },
+                            );
 
                             if let Ok(mut buffer) = terminal.lock() {
                                 let update = buffer.feed(&chunk);
