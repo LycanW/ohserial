@@ -26,10 +26,9 @@ pub fn run() {
         .setup(|app| {
             let app_handle = app.handle().clone();
             let serial = app.state::<AppState>().serial.clone();
-            let terminal = app.state::<AppState>().terminal.clone();
 
             std::thread::spawn(move || loop {
-                std::thread::sleep(std::time::Duration::from_millis(50));
+                std::thread::sleep(std::time::Duration::from_millis(16));
 
                 if !serial.is_connected() {
                     continue;
@@ -53,11 +52,6 @@ pub fn run() {
                                     bytes: chunk.clone(),
                                 },
                             );
-
-                            if let Ok(mut buffer) = terminal.lock() {
-                                let update = buffer.feed(&chunk);
-                                let _ = emit_event(&app_handle, AppEvent::TerminalUpdate(update));
-                            }
                         }
                     }
                     Err(crate::error::AppError::NotConnected) => {}
