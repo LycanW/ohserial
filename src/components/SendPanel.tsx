@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { WriteRequest } from '@/types'
 
 interface SendPanelProps {
@@ -42,9 +48,14 @@ export function SendPanel({ disabled, onSend }: SendPanelProps) {
 
       <div className="flex flex-col gap-1">
         <label className="text-xs text-muted-foreground">Mode</label>
-        <Select value={mode} onChange={(e) => setMode(e.target.value as any)} className="w-24">
-          <option value="text">Text</option>
-          <option value="hex">Hex</option>
+        <Select value={mode} onValueChange={(v) => setMode(v as 'text' | 'hex')}>
+          <SelectTrigger className="w-24">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="text">Text</SelectItem>
+            <SelectItem value="hex">Hex</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
@@ -52,13 +63,17 @@ export function SendPanel({ disabled, onSend }: SendPanelProps) {
         <label className="text-xs text-muted-foreground">Line Ending</label>
         <Select
           value={lineEnding}
-          onChange={(e) => setLineEnding(e.target.value as any)}
-          className="w-28"
+          onValueChange={(v) => setLineEnding(v as 'none' | 'cr' | 'lf' | 'crlf')}
         >
-          <option value="none">None</option>
-          <option value="cr">CR</option>
-          <option value="lf">LF</option>
-          <option value="crlf">CRLF</option>
+          <SelectTrigger className="w-28">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="cr">CR</SelectItem>
+            <SelectItem value="lf">LF</SelectItem>
+            <SelectItem value="crlf">CRLF</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 

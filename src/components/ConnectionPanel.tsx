@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { SerialConfig } from '@/types'
 
 interface ConnectionPanelProps {
@@ -30,13 +36,17 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
     <div className="flex flex-wrap items-end gap-3 p-4 border-b border-border bg-card">
       <div className="flex flex-col gap-1">
         <label className="text-xs text-muted-foreground">Port</label>
-        <Select value={port} onChange={(e) => setPort(e.target.value)}>
-          <option value="">Select port</option>
-          {ports.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
+        <Select value={port} onValueChange={setPort}>
+          <SelectTrigger className="w-56">
+            <SelectValue placeholder="Select port" />
+          </SelectTrigger>
+          <SelectContent>
+            {ports.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
         </Select>
       </div>
 
@@ -59,22 +69,31 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         <label className="text-xs text-muted-foreground">Data Bits</label>
         <Select
           value={String(dataBits)}
-          onChange={(e) => setDataBits(Number(e.target.value) as 5 | 6 | 7 | 8)}
-          className="w-20"
+          onValueChange={(v) => setDataBits(Number(v) as 5 | 6 | 7 | 8)}
         >
-          <option value="5">5</option>
-          <option value="6">6</option>
-          <option value="7">7</option>
-          <option value="8">8</option>
+          <SelectTrigger className="w-20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="5">5</SelectItem>
+            <SelectItem value="6">6</SelectItem>
+            <SelectItem value="7">7</SelectItem>
+            <SelectItem value="8">8</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
       <div className="flex flex-col gap-1">
         <label className="text-xs text-muted-foreground">Parity</label>
-        <Select value={parity} onChange={(e) => setParity(e.target.value as any)} className="w-24">
-          <option value="none">None</option>
-          <option value="odd">Odd</option>
-          <option value="even">Even</option>
+        <Select value={parity} onValueChange={(v) => setParity(v as 'none' | 'odd' | 'even')}>
+          <SelectTrigger className="w-24">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="odd">Odd</SelectItem>
+            <SelectItem value="even">Even</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
@@ -82,11 +101,15 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         <label className="text-xs text-muted-foreground">Stop Bits</label>
         <Select
           value={String(stopBits)}
-          onChange={(e) => setStopBits(Number(e.target.value) as 1 | 2)}
-          className="w-20"
+          onValueChange={(v) => setStopBits(Number(v) as 1 | 2)}
         >
-          <option value="1">1</option>
-          <option value="2">2</option>
+          <SelectTrigger className="w-20">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+          </SelectContent>
         </Select>
       </div>
 
