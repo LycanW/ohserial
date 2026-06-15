@@ -41,7 +41,7 @@ function App() {
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-hidden">
         {mode === 'traditional' ? (
           <RawLogView lines={lines} />
         ) : (

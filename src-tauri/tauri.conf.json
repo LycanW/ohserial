@@ -15,8 +15,8 @@
         "title": "OhSerial",
         "width": 900,
         "height": 650,
-        "minWidth": 640,
-        "minHeight": 420,
+        "minWidth": 800,
+        "minHeight": 520,
         "resizable": true
       }
     ],

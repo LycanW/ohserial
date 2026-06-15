@@ -16,7 +16,6 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
-  const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fitTerminal = useCallback(() => {
     const container = containerRef.current
@@ -24,12 +23,12 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     if (!container || !fitAddon) return
 
     const { clientWidth, clientHeight } = container
-    if (clientWidth === 0 || clientHeight === 0) return
+    if (clientWidth < 50 || clientHeight < 50) return
 
     try {
       fitAddon.fit()
     } catch {
-      // Ignore fit failures when container is not ready
+      // Container may still be laying out
     }
   }, [])
 
@@ -63,23 +62,23 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     terminalRef.current = terminal
     fitAddonRef.current = fitAddon
 
-    // Defer initial fit until the container has been laid out
-    const initialFitId = requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    // Keep trying to fit until the container has a real size
+    let attempts = 0
+    const tryFit = () => {
+      const container = containerRef.current
+      if (!container) return
+      const { clientWidth, clientHeight } = container
+      if (clientWidth > 0 && clientHeight > 0) {
         fitTerminal()
-      })
-    })
-    const fallbackFitId = setTimeout(() => {
-      fitTerminal()
-    }, 300)
+      } else if (attempts < 20) {
+        attempts += 1
+        setTimeout(tryFit, 50)
+      }
+    }
+    tryFit()
 
     const handleResize = () => {
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current)
-      }
-      resizeTimeoutRef.current = setTimeout(() => {
-        fitTerminal()
-      }, 100)
+      fitTerminal()
     }
 
     window.addEventListener('resize', handleResize)
@@ -93,20 +92,14 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     resizeObserverRef.current.observe(containerRef.current)
 
     return () => {
-      cancelAnimationFrame(initialFitId)
-      clearTimeout(fallbackFitId)
       window.removeEventListener('resize', handleResize)
       resizeObserverRef.current?.disconnect()
-      if (resizeTimeoutRef.current) {
-        clearTimeout(resizeTimeoutRef.current)
-      }
       terminal.dispose()
       terminalRef.current = null
       fitAddonRef.current = null
     }
   }, [disabled, onInput, fitTerminal])
 
-  // Flush incoming data from the backend queue
   useEffect(() => {
     const terminal = terminalRef.current
     if (!terminal) return
@@ -126,7 +119,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 bg-background">
+    <div className="flex flex-col flex-1 min-h-0 bg-background overflow-hidden">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <span className="text-xs text-muted-foreground">
           {disabled ? 'Connect to type' : 'Virtual Terminal'}
@@ -142,7 +135,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
       </div>
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 w-full h-full relative overflow-hidden p-2"
+        className="flex-1 min-h-0 relative overflow-hidden"
       />
     </div>
   )
