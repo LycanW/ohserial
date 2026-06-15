@@ -15,6 +15,11 @@ export function useSerial() {
   useEffect(() => {
     refreshPorts()
 
+    // Poll for newly connected/disconnected serial ports
+    const pollInterval = window.setInterval(() => {
+      refreshPorts()
+    }, 1000)
+
     const unlisten = listen('ohserial-event', (event) => {
       const payload = event.payload as any
       switch (payload.event) {
@@ -35,6 +40,7 @@ export function useSerial() {
     })
 
     return () => {
+      window.clearInterval(pollInterval)
       unlisten.then((fn) => fn())
     }
   }, [])
