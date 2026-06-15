@@ -50,3 +50,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .xterm {
+    height: 100%;
+  }
+  .xterm .xterm-screen {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}

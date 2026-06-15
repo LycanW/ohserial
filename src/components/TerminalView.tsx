@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
+import { Button } from '@/components/ui/button'
 import '@xterm/xterm/css/xterm.css'
 
 interface TerminalViewProps {
@@ -14,6 +15,18 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
+  const resizeObserverRef = useRef<ResizeObserver | null>(null)
+  const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const fitTerminal = useCallback(() => {
+    const fitAddon = fitAddonRef.current
+    if (!fitAddon) return
+    try {
+      fitAddon.fit()
+    } catch {
+      // Ignore fit failures when container is not ready
+    }
+  }, [])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -47,18 +60,32 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     fitAddonRef.current = fitAddon
 
     const handleResize = () => {
-      fitAddon.fit()
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
+      resizeTimeoutRef.current = setTimeout(() => {
+        fitTerminal()
+      }, 100)
     }
 
     window.addEventListener('resize', handleResize)
 
+    resizeObserverRef.current = new ResizeObserver(() => {
+      handleResize()
+    })
+    resizeObserverRef.current.observe(containerRef.current)
+
     return () => {
       window.removeEventListener('resize', handleResize)
+      resizeObserverRef.current?.disconnect()
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current)
+      }
       terminal.dispose()
       terminalRef.current = null
       fitAddonRef.current = null
     }
-  }, [disabled, onInput])
+  }, [disabled, onInput, fitTerminal])
 
   // Flush incoming data from the backend queue
   useEffect(() => {
@@ -71,14 +98,37 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     }
   }, [terminalTick, flushTerminalData])
 
+  const handleClear = () => {
+    terminalRef.current?.clear()
+  }
+
+  const handleReset = () => {
+    terminalRef.current?.reset()
+  }
+
   return (
     <div className="flex flex-col flex-1 min-h-0 bg-background">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <span className="text-xs text-muted-foreground">
           {disabled ? 'Connect to type' : 'Virtual Terminal'}
         </span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleClear}>
+            Clear
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleReset}>
+            Reset
+          </Button>
+        </div>
       </div>
-      <div ref={containerRef} className="flex-1 min-h-0 p-2" />
+      <div
+        ref={containerRef}
+        className="flex-1 min-h-0 relative overflow-hidden p-2"
+        style={{
+          // Force a definite containing block so xterm does not expand beyond it
+          contain: 'strict',
+        }}
+      />
     </div>
   )
 }
