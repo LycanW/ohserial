@@ -12,9 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "tauri-app",
-        "width": 800,
-        "height": 600
+        "title": "OhSerial",
+        "width": 900,
+        "height": 650,
+        "minWidth": 640,
+        "minHeight": 420,
+        "resizable": true
       }
     ],
     "security": {

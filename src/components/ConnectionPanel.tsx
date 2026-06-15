@@ -33,11 +33,11 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
   }
 
   return (
-    <div className="flex flex-wrap items-end gap-3 p-4 border-b border-border bg-card">
-      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
+    <div className="flex flex-wrap items-end gap-2 p-3 border-b border-border bg-card">
+      <div className="flex flex-col gap-1 p-1.5 rounded-md border border-border bg-background/50 min-w-0">
         <label className="text-xs text-muted-foreground">Port</label>
         <Select value={port} onValueChange={setPort}>
-          <SelectTrigger className="w-56">
+          <SelectTrigger className="w-48">
             <SelectValue placeholder="Select port" />
           </SelectTrigger>
           <SelectContent>
@@ -50,13 +50,13 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
+      <div className="flex flex-col gap-1 p-1.5 rounded-md border border-border bg-background/50 min-w-0">
         <label className="text-xs text-muted-foreground">Baud Rate</label>
         <Input
           list="baud-presets"
           value={baudRate}
           onChange={(e) => setBaudRate(e.target.value)}
-          className="w-32"
+          className="w-28"
         />
         <datalist id="baud-presets">
           {baudPresets.map((b) => (
@@ -65,13 +65,13 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </datalist>
       </div>
 
-      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
+      <div className="flex flex-col gap-1 p-1.5 rounded-md border border-border bg-background/50 min-w-0">
         <label className="text-xs text-muted-foreground">Data Bits</label>
         <Select
           value={String(dataBits)}
           onValueChange={(v) => setDataBits(Number(v) as 5 | 6 | 7 | 8)}
         >
-          <SelectTrigger className="w-20">
+          <SelectTrigger className="w-16">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -83,10 +83,10 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
+      <div className="flex flex-col gap-1 p-1.5 rounded-md border border-border bg-background/50 min-w-0">
         <label className="text-xs text-muted-foreground">Parity</label>
         <Select value={parity} onValueChange={(v) => setParity(v as 'none' | 'odd' | 'even')}>
-          <SelectTrigger className="w-24">
+          <SelectTrigger className="w-20">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -97,13 +97,13 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
         </Select>
       </div>
 
-      <div className="flex flex-col gap-1 p-2 rounded-md border border-border bg-background/50">
+      <div className="flex flex-col gap-1 p-1.5 rounded-md border border-border bg-background/50 min-w-0">
         <label className="text-xs text-muted-foreground">Stop Bits</label>
         <Select
           value={String(stopBits)}
           onValueChange={(v) => setStopBits(Number(v) as 1 | 2)}
         >
-          <SelectTrigger className="w-20">
+          <SelectTrigger className="w-16">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
