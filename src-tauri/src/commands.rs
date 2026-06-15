@@ -47,3 +47,9 @@ pub fn write_data(request: WriteRequest, state: State<'_, AppState>) -> AppResul
     state.serial.write(bytes)?;
     Ok(())
 }
+
+#[tauri::command]
+pub fn write_raw(data: String, state: State<'_, AppState>) -> AppResult<()> {
+    state.serial.write(data.into_bytes())?;
+    Ok(())
+}

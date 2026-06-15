@@ -5,7 +5,7 @@ import { StatusBar } from '@/components/StatusBar'
 import { useSerial } from '@/hooks/useSerial'
 
 function App() {
-  const { ports, state, lines, terminal, openPort, closePort, writeData } = useSerial()
+  const { ports, state, lines, terminal, openPort, closePort, writeData, writeRaw } = useSerial()
   const connected = state.status === 'connected'
 
   return (
@@ -18,7 +18,12 @@ function App() {
       />
 
       <div className="flex-1 min-h-0">
-        <TerminalView lines={lines} terminal={terminal} />
+        <TerminalView
+          lines={lines}
+          terminal={terminal}
+          disabled={!connected}
+          onInput={writeRaw}
+        />
       </div>
 
       <SendPanel disabled={!connected} onSend={writeData} />

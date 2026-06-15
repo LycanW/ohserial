@@ -54,6 +54,10 @@ export function useSerial() {
     await invoke('write_data', { request })
   }
 
+  const writeRaw = async (data: string) => {
+    await invoke('write_raw', { data })
+  }
+
   const clearLines = () => setLines([])
 
   return {
@@ -65,6 +69,7 @@ export function useSerial() {
     openPort,
     closePort,
     writeData,
+    writeRaw,
     clearLines,
   }
 }

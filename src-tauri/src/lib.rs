@@ -21,6 +21,7 @@ pub fn run() {
             commands::open_port,
             commands::close_port,
             commands::write_data,
+            commands::write_raw,
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
