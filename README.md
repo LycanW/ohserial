@@ -58,23 +58,51 @@ ohserial/
 
 ### Install dependencies
 
+You must install Node dependencies before running or building the app, even if you prefer Cargo commands:
+
 ```bash
 npm install
 ```
 
 ### Run in development mode
 
+**Using npm (recommended):**
+
 ```bash
 npm run tauri dev
 ```
 
+**Using Cargo:**
+
+```bash
+cargo tauri dev
+```
+
+> `cargo tauri` requires the Tauri CLI: `cargo install tauri-cli --locked`
+
 ### Build for production
+
+**Using npm:**
 
 ```bash
 npm run tauri:build
 ```
 
+**Using Cargo:**
+
+```bash
+cargo tauri build
+```
+
 Production bundles will be written to `src-tauri/target/release/bundle/`.
+
+### Rust-only development
+
+If you only want to compile and run the Rust backend without the frontend dev server:
+
+```bash
+cargo run --manifest-path src-tauri/Cargo.toml
+```
 
 ## Usage
 
