@@ -19,8 +19,13 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
   const resizeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fitTerminal = useCallback(() => {
+    const container = containerRef.current
     const fitAddon = fitAddonRef.current
-    if (!fitAddon) return
+    if (!container || !fitAddon) return
+
+    const { clientWidth, clientHeight } = container
+    if (clientWidth === 0 || clientHeight === 0) return
+
     try {
       fitAddon.fit()
     } catch {
@@ -34,7 +39,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: 14,
-      fontFamily: 'monospace',
+      fontFamily: 'JetBrains Mono, Fira Code, Consolas, monospace',
       theme: {
         background: '#0f172a',
         foreground: '#e2e8f0',
@@ -48,7 +53,6 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     const fitAddon = new FitAddon()
     terminal.loadAddon(fitAddon)
     terminal.open(containerRef.current)
-    fitAddon.fit()
 
     terminal.onData((data) => {
       if (!disabled) {
@@ -58,6 +62,16 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
 
     terminalRef.current = terminal
     fitAddonRef.current = fitAddon
+
+    // Defer initial fit until the container has been laid out
+    const initialFitId = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        fitTerminal()
+      })
+    })
+    const fallbackFitId = setTimeout(() => {
+      fitTerminal()
+    }, 300)
 
     const handleResize = () => {
       if (resizeTimeoutRef.current) {
@@ -70,12 +84,17 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
 
     window.addEventListener('resize', handleResize)
 
-    resizeObserverRef.current = new ResizeObserver(() => {
-      handleResize()
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      const entry = entries[0]
+      if (entry && entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+        handleResize()
+      }
     })
     resizeObserverRef.current.observe(containerRef.current)
 
     return () => {
+      cancelAnimationFrame(initialFitId)
+      clearTimeout(fallbackFitId)
       window.removeEventListener('resize', handleResize)
       resizeObserverRef.current?.disconnect()
       if (resizeTimeoutRef.current) {
@@ -123,11 +142,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
       </div>
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 relative overflow-hidden p-2"
-        style={{
-          // Force a definite containing block so xterm does not expand beyond it
-          contain: 'strict',
-        }}
+        className="flex-1 min-h-0 w-full h-full relative overflow-hidden p-2"
       />
     </div>
   )
