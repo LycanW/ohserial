@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react'
 import { Terminal } from '@xterm/xterm'
+import { FitAddon } from '@xterm/addon-fit'
 import { Button } from '@/components/ui/button'
 import '@xterm/xterm/css/xterm.css'
 
@@ -10,60 +11,21 @@ interface TerminalViewProps {
   flushTerminalData: () => Uint8Array[]
 }
 
-function measureCell(container: HTMLElement, terminal: Terminal): { width: number; height: number } | null {
-  const cellEl = container.querySelector('.xterm-cell') as HTMLElement | null
-  if (cellEl) {
-    const rect = cellEl.getBoundingClientRect()
-    if (rect.width > 0 && rect.height > 0) {
-      return { width: rect.width, height: rect.height }
-    }
-  }
-
-  const fontFamily = (terminal.options.fontFamily as string) || 'monospace'
-  const fontSize = (terminal.options.fontSize as number) || 14
-
-  const span = document.createElement('span')
-  span.textContent = 'W'
-  span.style.fontFamily = fontFamily
-  span.style.fontSize = `${fontSize}px`
-  span.style.lineHeight = 'normal'
-  span.style.position = 'absolute'
-  span.style.visibility = 'hidden'
-  span.style.whiteSpace = 'pre'
-  document.body.appendChild(span)
-
-  const rect = span.getBoundingClientRect()
-  document.body.removeChild(span)
-
-  if (rect.width === 0 || rect.height === 0) return null
-  return { width: rect.width, height: rect.height }
-}
-
-function resizeToContainer(terminal: Terminal, container: HTMLElement) {
-  const { clientWidth, clientHeight } = container
-  if (clientWidth < 50 || clientHeight < 50) return
-
-  const cell = measureCell(container, terminal)
-  if (!cell) return
-
-  const cols = Math.floor(clientWidth / cell.width)
-  const rows = Math.floor(clientHeight / cell.height)
-
-  if (cols > 0 && rows > 0 && (cols !== terminal.cols || rows !== terminal.rows)) {
-    terminal.resize(cols, rows)
-  }
-}
-
 export function TerminalView({ terminalTick, disabled, onInput, flushTerminalData }: TerminalViewProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
+  const fitAddonRef = useRef<FitAddon | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
+  const timersRef = useRef<number[]>([])
 
   const fitTerminal = useCallback(() => {
-    const container = containerRef.current
-    const terminal = terminalRef.current
-    if (!container || !terminal) return
-    resizeToContainer(terminal, container)
+    const fitAddon = fitAddonRef.current
+    if (!fitAddon) return
+    try {
+      fitAddon.fit()
+    } catch {
+      // Ignore fit failures when container is not ready
+    }
   }, [])
 
   useEffect(() => {
@@ -83,7 +45,10 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
       scrollback: 10000,
     })
 
+    const fitAddon = new FitAddon()
+    terminal.loadAddon(fitAddon)
     terminal.open(containerRef.current)
+
     terminal.onData((data) => {
       if (!disabled) {
         onInput(data)
@@ -91,40 +56,25 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     })
 
     terminalRef.current = terminal
+    fitAddonRef.current = fitAddon
 
-    // Resize to a default grid first so xterm renders cells we can measure,
-    // then fit to the container once fonts/layout are ready.
-    const applyFit = async () => {
-      const container = containerRef.current
-      const term = terminalRef.current
-      if (!container || !term) return
-
-      terminal.resize(80, 24)
-
-      await document.fonts.ready
-      await new Promise((resolve) => requestAnimationFrame(resolve))
-      await new Promise((resolve) => requestAnimationFrame(resolve))
-
-      resizeToContainer(term, container)
+    const scheduleFit = () => {
+      fitTerminal()
     }
 
-    let cancelled = false
-    const tryFit = async (attempt = 0) => {
-      if (cancelled) return
-      const container = containerRef.current
-      const term = terminalRef.current
-      if (!container || !term) return
-
-      if (container.clientWidth > 0 && container.clientHeight > 0) {
-        await applyFit()
-      } else if (attempt < 20) {
-        setTimeout(() => tryFit(attempt + 1), 50)
-      }
-    }
-    tryFit()
+    // Try to fit immediately and then several times as fonts/layout settle
+    const ids = [
+      window.setTimeout(scheduleFit, 0),
+      window.setTimeout(scheduleFit, 50),
+      window.setTimeout(scheduleFit, 150),
+      window.setTimeout(scheduleFit, 300),
+      window.setTimeout(scheduleFit, 600),
+      window.setTimeout(scheduleFit, 1000),
+    ]
+    timersRef.current = ids
 
     const handleResize = () => {
-      fitTerminal()
+      scheduleFit()
     }
 
     window.addEventListener('resize', handleResize)
@@ -132,17 +82,19 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     resizeObserverRef.current = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (entry && entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-        handleResize()
+        scheduleFit()
       }
     })
     resizeObserverRef.current.observe(containerRef.current)
 
     return () => {
-      cancelled = true
+      timersRef.current.forEach((id) => window.clearTimeout(id))
+      timersRef.current = []
       window.removeEventListener('resize', handleResize)
       resizeObserverRef.current?.disconnect()
       terminal.dispose()
       terminalRef.current = null
+      fitAddonRef.current = null
     }
   }, [disabled, onInput, fitTerminal])
 
