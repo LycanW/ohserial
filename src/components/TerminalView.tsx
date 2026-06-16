@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { Button } from '@/components/ui/button'
+import { stripScreenClearingSequences } from '@/lib/terminalFilter'
 import '@xterm/xterm/css/xterm.css'
 
 interface TerminalViewProps {
@@ -103,7 +104,10 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
 
     const chunks = flushTerminalData()
     for (const chunk of chunks) {
-      terminal.write(chunk)
+      const filtered = stripScreenClearingSequences(chunk)
+      if (filtered.length > 0) {
+        terminal.write(filtered)
+      }
     }
   }, [terminalTick, flushTerminalData])
 
