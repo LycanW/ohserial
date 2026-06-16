@@ -1,7 +1,8 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { Button } from '@/components/ui/button'
+import { Toggle } from '@/components/ui/toggle'
 import { stripScreenClearingSequences } from '@/lib/terminalFilter'
 import '@xterm/xterm/css/xterm.css'
 
@@ -18,6 +19,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
   const fitAddonRef = useRef<FitAddon | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const timersRef = useRef<number[]>([])
+  const [preserveLog, setPreserveLog] = useState(false)
 
   const fitTerminal = useCallback(() => {
     const fitAddon = fitAddonRef.current
@@ -104,9 +106,9 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
 
     const chunks = flushTerminalData()
     for (const chunk of chunks) {
-      const filtered = stripScreenClearingSequences(chunk)
-      if (filtered.length > 0) {
-        terminal.write(filtered)
+      const data = preserveLog ? stripScreenClearingSequences(chunk) : chunk
+      if (data.length > 0) {
+        terminal.write(data)
       }
     }
   }, [terminalTick, flushTerminalData])
@@ -126,6 +128,14 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
           {disabled ? 'Connect to type' : 'Virtual Terminal'}
         </span>
         <div className="flex items-center gap-2">
+          <Toggle
+            pressed={preserveLog}
+            onPressedChange={setPreserveLog}
+            aria-label="Preserve log history"
+            className="text-xs px-2"
+          >
+            Preserve Log
+          </Toggle>
           <Button variant="outline" size="sm" onClick={handleClear}>
             Clear
           </Button>
