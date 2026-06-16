@@ -18,14 +18,29 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
   const terminalRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
-  const timersRef = useRef<number[]>([])
+  const lastSizeRef = useRef<{ cols: number; rows: number } | null>(null)
+  const disabledRef = useRef(disabled)
+  const onInputRef = useRef(onInput)
   const [preserveLog, setPreserveLog] = useState(false)
+
+  // Keep refs in sync so the terminal setup effect does not re-run on prop changes
+  disabledRef.current = disabled
+  onInputRef.current = onInput
 
   const fitTerminal = useCallback(() => {
     const fitAddon = fitAddonRef.current
-    if (!fitAddon) return
+    const container = containerRef.current
+    if (!fitAddon || !container) return
+
+    const dims = fitAddon.proposeDimensions()
+    if (!dims || dims.cols <= 0 || dims.rows <= 0) return
+
+    const last = lastSizeRef.current
+    if (last && last.cols === dims.cols && last.rows === dims.rows) return
+
     try {
       fitAddon.fit()
+      lastSizeRef.current = { cols: dims.cols, rows: dims.rows }
     } catch {
       // Ignore fit failures when container is not ready
     }
@@ -53,52 +68,44 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     terminal.open(containerRef.current)
 
     terminal.onData((data) => {
-      if (!disabled) {
-        onInput(data)
+      if (!disabledRef.current) {
+        onInputRef.current(data)
       }
     })
 
     terminalRef.current = terminal
     fitAddonRef.current = fitAddon
 
-    const scheduleFit = () => {
-      fitTerminal()
-    }
-
-    const ids = [
-      window.setTimeout(scheduleFit, 0),
-      window.setTimeout(scheduleFit, 50),
-      window.setTimeout(scheduleFit, 150),
-      window.setTimeout(scheduleFit, 300),
-      window.setTimeout(scheduleFit, 600),
-      window.setTimeout(scheduleFit, 1000),
-    ]
-    timersRef.current = ids
-
     const handleResize = () => {
-      scheduleFit()
+      fitTerminal()
     }
 
     window.addEventListener('resize', handleResize)
 
+    // Fit once the DOM has had a chance to measure the container, then watch
+    // for container-only size changes to avoid unnecessary reflows.
+    const rafId = requestAnimationFrame(() => fitTerminal())
+    const fallbackId = window.setTimeout(() => fitTerminal(), 100)
+
     resizeObserverRef.current = new ResizeObserver((entries) => {
       const entry = entries[0]
       if (entry && entry.contentRect.width > 0 && entry.contentRect.height > 0) {
-        scheduleFit()
+        fitTerminal()
       }
     })
     resizeObserverRef.current.observe(containerRef.current)
 
     return () => {
-      timersRef.current.forEach((id) => window.clearTimeout(id))
-      timersRef.current = []
+      window.cancelAnimationFrame(rafId)
+      window.clearTimeout(fallbackId)
       window.removeEventListener('resize', handleResize)
       resizeObserverRef.current?.disconnect()
       terminal.dispose()
       terminalRef.current = null
       fitAddonRef.current = null
+      lastSizeRef.current = null
     }
-  }, [disabled, onInput, fitTerminal])
+  }, [fitTerminal])
 
   useEffect(() => {
     const terminal = terminalRef.current
@@ -146,7 +153,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
       </div>
       <div
         ref={containerRef}
-        className="flex-1 min-h-0 w-full relative overflow-hidden"
+        className="h-full w-full relative"
       />
     </div>
   )

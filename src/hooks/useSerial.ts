@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import type { SerialConfig, ConnectionState, DataLine, WriteRequest } from '@/types'
@@ -53,7 +53,7 @@ export function useSerial() {
     }
   }, [])
 
-  const refreshPorts = async () => {
+  const refreshPorts = useCallback(async () => {
     try {
       const list = await invoke<string[]>('list_serial_ports')
       list.sort(new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare)
@@ -61,36 +61,36 @@ export function useSerial() {
     } catch {
       // Ignore polling errors so the auto-refresh loop keeps running
     }
-  }
+  }, [])
 
-  const openPort = async (config: SerialConfig) => {
+  const openPort = useCallback(async (config: SerialConfig) => {
     setState({ status: 'connecting' })
     try {
       await invoke('open_port', { config })
     } catch (e) {
       setState({ status: 'error', message: String(e) })
     }
-  }
+  }, [])
 
-  const closePort = async () => {
+  const closePort = useCallback(async () => {
     await invoke('close_port')
-  }
+  }, [])
 
-  const writeData = async (request: WriteRequest) => {
+  const writeData = useCallback(async (request: WriteRequest) => {
     await invoke('write_data', { request })
-  }
+  }, [])
 
-  const writeRaw = async (data: string) => {
+  const writeRaw = useCallback(async (data: string) => {
     await invoke('write_raw', { data })
-  }
+  }, [])
 
-  const flushTerminalData = () => {
+  const flushTerminalData = useCallback(() => {
     const chunks = terminalQueue.current
     terminalQueue.current = []
     return chunks
-  }
+  }, [])
 
-  const clearLines = () => setLines([])
+  const clearLines = useCallback(() => setLines([]), [])
 
   return {
     ports,
