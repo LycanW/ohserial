@@ -8,7 +8,7 @@ interface TerminalViewProps {
   terminalTick: number
   disabled: boolean
   onInput: (data: string) => void
-  flushTerminalData: () => Uint8Array
+  flushTerminalData: () => Uint8Array[]
 }
 
 export function TerminalView({ terminalTick, disabled, onInput, flushTerminalData }: TerminalViewProps) {
@@ -101,9 +101,9 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
     const terminal = terminalRef.current
     if (!terminal) return
 
-    const data = flushTerminalData()
-    if (data.length > 0) {
-      terminal.write(data)
+    const chunks = flushTerminalData()
+    for (const chunk of chunks) {
+      terminal.write(chunk)
     }
   }, [terminalTick, flushTerminalData])
 

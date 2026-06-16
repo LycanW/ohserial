@@ -87,20 +87,7 @@ export function useSerial() {
   const flushTerminalData = () => {
     const chunks = terminalQueue.current
     terminalQueue.current = []
-    if (chunks.length === 0) {
-      return new Uint8Array(0)
-    }
-    if (chunks.length === 1) {
-      return chunks[0]
-    }
-    const total = chunks.reduce((sum, c) => sum + c.length, 0)
-    const merged = new Uint8Array(total)
-    let offset = 0
-    for (const chunk of chunks) {
-      merged.set(chunk, offset)
-      offset += chunk.length
-    }
-    return merged
+    return chunks
   }
 
   const clearLines = () => setLines([])
