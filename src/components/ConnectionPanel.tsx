@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { RefreshCw } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -15,9 +16,10 @@ interface ConnectionPanelProps {
   connected: boolean
   onOpen: (config: SerialConfig) => void
   onClose: () => void
+  onRefreshPorts: () => void
 }
 
-export function ConnectionPanel({ ports, connected, onOpen, onClose }: ConnectionPanelProps) {
+export function ConnectionPanel({ ports, connected, onOpen, onClose, onRefreshPorts }: ConnectionPanelProps) {
   const [port, setPort] = useState('')
   const [baudRate, setBaudRate] = useState('115200')
   const [dataBits, setDataBits] = useState<5 | 6 | 7 | 8>(8)
@@ -36,18 +38,23 @@ export function ConnectionPanel({ ports, connected, onOpen, onClose }: Connectio
     <div className="flex flex-wrap items-end gap-2 p-3 border-b border-border bg-card">
       <div className="flex flex-col gap-1 p-1.5 rounded-md border border-border bg-background/50 min-w-0">
         <label className="text-xs text-muted-foreground">Port</label>
-        <Select value={port} onValueChange={setPort}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Select port" />
-          </SelectTrigger>
-          <SelectContent>
-            {ports.map((p) => (
-              <SelectItem key={p} value={p}>
-                {p}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-1">
+          <Select value={port} onValueChange={setPort}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Select port" />
+            </SelectTrigger>
+            <SelectContent>
+              {ports.map((p) => (
+                <SelectItem key={p} value={p}>
+                  {p}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" onClick={onRefreshPorts} title="Refresh ports">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1 p-1.5 rounded-md border border-border bg-background/50 min-w-0">

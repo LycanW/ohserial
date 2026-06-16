@@ -54,8 +54,13 @@ export function useSerial() {
   }, [])
 
   const refreshPorts = async () => {
-    const list = await invoke<string[]>('list_serial_ports')
-    setPorts(list)
+    try {
+      const list = await invoke<string[]>('list_serial_ports')
+      list.sort(new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare)
+      setPorts(list)
+    } catch {
+      // Ignore polling errors so the auto-refresh loop keeps running
+    }
   }
 
   const openPort = async (config: SerialConfig) => {

@@ -11,7 +11,7 @@ type AppMode = 'traditional' | 'terminal'
 
 function App() {
   const [mode, setMode] = useState<AppMode>('terminal')
-  const { ports, state, lines, terminalTick, openPort, closePort, writeData, writeRaw, flushTerminalData } = useSerial()
+  const { ports, state, lines, terminalTick, openPort, closePort, writeData, writeRaw, flushTerminalData, clearLines, refreshPorts } = useSerial()
   const connected = state.status === 'connected'
 
   return (
@@ -21,6 +21,7 @@ function App() {
         connected={connected}
         onOpen={openPort}
         onClose={closePort}
+        onRefreshPorts={refreshPorts}
       />
 
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border">
@@ -43,7 +44,7 @@ function App() {
 
       <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {mode === 'traditional' ? (
-          <RawLogView lines={lines} />
+          <RawLogView lines={lines} onClear={clearLines} />
         ) : (
           <TerminalView
             terminalTick={terminalTick}
