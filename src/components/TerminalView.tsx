@@ -153,7 +153,7 @@ export function TerminalView({ terminalTick, disabled, onInput, flushTerminalDat
       </div>
       <div
         ref={containerRef}
-        className="h-full w-full relative"
+        className="flex-1 min-h-0 w-full relative"
       />
     </div>
   )
