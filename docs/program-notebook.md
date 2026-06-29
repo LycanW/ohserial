@@ -221,8 +221,6 @@ graph LR
 
 | 类型 | 路径 | 说明 |
 |---|---|---|
-| 设计文档 | `docs/superpowers/specs/2026-06-15-ohserial-design.md` | 原始设计：含架构、数据流、终端模式决策 |
-| 实现计划 | `docs/superpowers/plans/2026-06-15-ohserial-implementation-plan.md` | 分任务实现计划与文件结构 |
 | 使用说明 | `README.md` | 功能特性、开发命令、项目结构 |
 | 前端依赖 | `package.json` | npm scripts、React/Tailwind/xterm 等依赖 |
 | 后端依赖 | `src-tauri/Cargo.toml` | Rust crate 依赖 |
@@ -237,12 +235,11 @@ graph LR
 
 以下条目均来自当前源码搜索/文件读取，非推测。
 
-1. **设计文档与实现漂移：终端模式实际使用 xterm.js，后端 `TerminalBuffer` 未使用**
-   - `docs/superpowers/specs/2026-06-15-ohserial-design.md` 明确决策为“后端 ANSI 解析 + 前端网格渲染”，并排除 xterm.js。
-   - 实际 `src/components/TerminalView.tsx` 直接使用 `@xterm/xterm` + `@xterm/addon-fit` 渲染，通过 `TerminalRaw` 事件接收原始字节。
+1. **后端 `TerminalBuffer` 与 `TerminalUpdate` 为死代码**
    - `src-tauri/src/state.rs` 初始化了 `TerminalBuffer`，但没有任何代码读取或更新它。
    - `AppEvent::TerminalUpdate` 在 `src-tauri/src/events.rs` 中定义，但 `src-tauri/src/lib.rs` 的读轮询线程只发送 `DataLine` 和 `TerminalRaw`，从未发送 `TerminalUpdate`。
-   - 结论：`terminal/` 模块及 `TerminalUpdate` 相关类型当前是死代码；设计文档已过时。
+   - `src-tauri/src/terminal/` 模块仅被自身和 `state.rs` 引用，未接入主数据流。
+   - 结论：`terminal/` 模块及 `TerminalUpdate` 相关类型当前是死代码。
 
 2. **`ConnectionState::Connecting` 仅在前端本地使用**
    - `src/hooks/useSerial.ts` 的 `openPort` 会设置 `{ status: 'connecting' }`。
