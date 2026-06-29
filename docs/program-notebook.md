@@ -139,6 +139,49 @@ sequenceDiagram
 - 当前没有外部持久化配置文件或环境变量读取链。
 - 前端默认值（如波特率 115200）硬编码在 `ConnectionPanel.tsx`。
 
+## CI/CD 流水线
+
+```mermaid
+graph LR
+    PUSH[Push to master / PR]
+    CI[ci.yml]
+    TS[TypeScript typecheck]
+    CARGOC[cargo check]
+    CLIPPY[cargo clippy -D warnings]
+    TEST[cargo test]
+    TAG[Push tag v*]
+    PUB[publish.yml]
+    LINUX[ubuntu-22.04 build<br/>deb / rpm / AppImage]
+    MACOS_A[macos-latest aarch64<br/>dmg]
+    MACOS_X[macos-latest x86_64<br/>dmg]
+    WIN[windows-latest build<br/>msi / nsis exe]
+    REL[GitHub Release]
+
+    PUSH --> CI
+    CI --> TS
+    CI --> CARGOC
+    CARGOC --> CLIPPY
+    CLIPPY --> TEST
+    TAG --> PUB
+    PUB --> LINUX
+    PUB --> MACOS_A
+    PUB --> MACOS_X
+    PUB --> WIN
+    LINUX --> REL
+    MACOS_A --> REL
+    MACOS_X --> REL
+    WIN --> REL
+```
+
+| 工作流 | 文件 | 触发条件 | 职责 |
+|--------|------|----------|------|
+| CI | `.github/workflows/ci.yml` | push/PR 到 `master` | 前端 `tsc --noEmit`；后端 `cargo check` + `clippy` + `test` |
+| 发布 | `.github/workflows/publish.yml` | 推送 `v*` 标签 | 四平台并行构建 `.deb`/`.rpm`/`.AppImage`/`.dmg`/`.msi`/`.exe`，自动创建 GitHub Release |
+
+- CI 两个 job（`frontend` / `rust`）并行运行。
+- 发布使用 tauri-apps/tauri-action，`tagName` 绑定 `${{ github.ref_name }}`。
+- 无自动版本号 bump；发布前需手动更新 `src-tauri/tauri.conf.json` 的 `version` 并 push tag。
+
 ## 逐模块摘要
 
 ### 前端 (`src/`)
@@ -187,6 +230,8 @@ sequenceDiagram
 | 安全能力 | `src-tauri/capabilities/default.json` | 当前仅 `core:default` |
 | 前端构建 | `vite.config.ts` | Vite + Tauri dev 专用端口/别名配置 |
 | UI 配置 | `tailwind.config.js`、`components.json`、`src/index.css` | Tailwind / shadcn/ui 主题与变量 |
+| CI 工作流 | `.github/workflows/ci.yml` | 前端 typecheck + 后端 cargo check/clippy/test |
+| 发布工作流 | `.github/workflows/publish.yml` | `v*` tag 触发多平台构建发布 |
 
 ## 已验证的实现缺陷与限制
 
@@ -217,4 +262,4 @@ sequenceDiagram
 
 ---
 
-*Notebook 创建时间：2026-06-27。后续每次结构性改动后应同步更新本文件或对应 `docs/architecture/*.md`。*
+*Notebook 创建时间：2026-06-27。上次更新：2026-06-29（新增 CI/CD 流水线章节）。后续每次结构性改动后应同步更新本文件或对应 `docs/architecture/*.md`。*
