@@ -51,7 +51,16 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'OhSerial v__VERSION__'
-          releaseBody: 'Release of OhSerial v__VERSION__'
+          releaseBody: |
+            OhSerial v__VERSION__ 首个公开发布版本。
+
+            ### 安装说明
+            - **macOS**: 下载 `.dmg`（Apple Silicon 选 aarch64，Intel 选 x86_64）
+            - **Windows**: 下载 `.msi` 或 `.exe` 安装包
+            - **Linux**: 下载 `.deb`（Debian/Ubuntu）或 `.rpm`（Fedora/openSUSE）
+
+            ### 变更摘要
+          generateReleaseNotes: true
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
