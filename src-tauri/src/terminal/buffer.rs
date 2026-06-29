@@ -48,10 +48,8 @@ impl TerminalBuffer {
         match b {
             b'\n' => self.new_line(),
             b'\r' => self.cursor_col = 0,
-            b'\x08' => {
-                if self.cursor_col > 0 {
-                    self.cursor_col -= 1;
-                }
+            b'\x08' if self.cursor_col > 0 => {
+                self.cursor_col -= 1;
             }
             0x1b => {
                 // Minimal ANSI placeholder: skip next char if '['

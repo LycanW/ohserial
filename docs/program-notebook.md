@@ -9,7 +9,7 @@ OhSerial 是一个跨平台 GUI 串口终端，基于 **Tauri v2 + Rust + React 
 - 前端负责 UI 渲染与用户交互，通过 Tauri 命令/事件与后端通信。
 - 后端负责串口 I/O、数据编解码、连接状态管理。
 - 当前实现支持两种显示模式：Traditional Serial（按行日志）和 Virtual Terminal（基于 xterm.js 的 ANSI 终端）。
-- 当前版本：`0.1.0`。
+- 当前版本：`0.1.1`。
 
 ## 全局数据流摘要
 

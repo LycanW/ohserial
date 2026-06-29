@@ -56,7 +56,7 @@ impl ProtocolEngine {
 
 fn parse_hex(input: &str) -> Result<Vec<u8>, String> {
     let cleaned: String = input.split_whitespace().collect();
-    if cleaned.len() % 2 != 0 {
+    if !cleaned.len().is_multiple_of(2) {
         return Err("hex string must have even number of digits".into());
     }
     (0..cleaned.len())

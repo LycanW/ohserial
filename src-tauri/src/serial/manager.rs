@@ -11,6 +11,12 @@ pub struct SerialManager {
     data_rx: Mutex<Option<mpsc::Receiver<Vec<u8>>>>,
 }
 
+impl Default for SerialManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SerialManager {
     pub fn new() -> Self {
         Self {
@@ -54,7 +60,7 @@ impl SerialManager {
     pub fn write(&self, bytes: Vec<u8>) -> AppResult<()> {
         let worker = self.worker.lock().unwrap();
         if let Some(w) = worker.as_ref() {
-            w.send(bytes).map_err(|e| AppError::SerialPort(e))?;
+            w.send(bytes).map_err(AppError::SerialPort)?;
             Ok(())
         } else {
             Err(AppError::NotConnected)
